@@ -1,7 +1,5 @@
 env/
 migrations/
 
-
-
 *.pyc
 *.sqlite3
