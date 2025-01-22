@@ -10,12 +10,40 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     groups = serializers.PrimaryKeyRelatedField(queryset=Group.objects.all(), required=False, many=True)
     user_permissions = serializers.PrimaryKeyRelatedField(queryset=Permission.objects.all(), required=False, many=True)
     
+    # Dynamic fields for districts and municipalities, as per province and district selected
+    perm_district = serializers.ChoiceField(choices=[])
+    perm_municipality = serializers.ChoiceField(choices=[])
+    temp_district = serializers.ChoiceField(choices=[])
+    temp_municipality = serializers.ChoiceField(choices=[])
+
     class Meta:
         model = CustomUser
         fields = '__all__'
         extra_kwargs = {
             'password': {'write_only': True}
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Dynamically set district choices based on perm_state (province)
+        perm_province = self.initial_data.get('perm_state', None)
+        if perm_province:
+            self.fields['perm_district'].choices = [(district, district) for district in CustomUser().get_district_choices(perm_province)]
+        
+        # Dynamically set municipality choices based on perm_state and perm_district
+        perm_district = self.initial_data.get('perm_district', None)
+        if perm_district and perm_province:
+            self.fields['perm_municipality'].choices = [(municipality, municipality) for municipality in CustomUser().get_municipality_choices(perm_province, perm_district)]
+
+        # Dynamically set temp_district choices based on temp_state (province)
+        temp_province = self.initial_data.get('temp_state', None)
+        if temp_province:
+            self.fields['temp_district'].choices = [(district, district) for district in CustomUser().get_district_choices(temp_province)]
+        
+        # Dynamically set temp_municipality choices based on temp_state and temp_district
+        temp_district = self.initial_data.get('temp_district', None)
+        if temp_district and temp_province:
+            self.fields['temp_municipality'].choices = [(municipality, municipality) for municipality in CustomUser().get_municipality_choices(temp_province, temp_district)]
 
     def create(self, validated_data):
         # Handle groups and permissions separately
