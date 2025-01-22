@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
-from .models import CustomUser
+from .models import CustomUser 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group, Permission
 
@@ -18,11 +18,15 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         }
 
     def create(self, validated_data):
+        # Handle groups and permissions separately
         groups = validated_data.pop('groups', [])
         user_permissions = validated_data.pop('user_permissions', [])
-
-        user = CustomUser.objects.create_user(**validated_data)
         
+        # Handle password hashing
+        password = validated_data.pop('password')
+        user = CustomUser.objects.create_user(password=password, **validated_data)
+        
+        # Assign groups and permissions if provided
         if groups:
             user.groups.set(groups)
         if user_permissions:

@@ -1,12 +1,10 @@
 from django.contrib import admin
 from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from fts_app.views import UserViewSet
-
-router = DefaultRouter()
-router.register(r'user', UserViewSet, basename='user')
+from django.conf.urls.static import static
+from django.conf import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include(router.urls)),
-]
+    path("", include("fts_app.urls")),
+
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

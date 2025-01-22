@@ -13,7 +13,6 @@ class UserViewSet(viewsets.ViewSet):
         serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-
   
             if 'groups' in request.data:
                 groups = request.data['groups']  
