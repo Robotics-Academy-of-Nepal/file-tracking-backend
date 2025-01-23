@@ -217,7 +217,7 @@ class CustomUser(AbstractUser):
     education = models.ForeignKey(Education, on_delete=models.CASCADE, null=True, blank=True)
 
     #Office Details
-
+    office = models.ForeignKey(Office, on_delete=models.CASCADE, null=True, blank=True)
 
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
