@@ -1,104 +1,89 @@
-from rest_framework.decorators import api_view
-from rest_framework.permissions import AllowAny
-from rest_framework.decorators import action
+from rest_framework.decorators import api_view, action
 from rest_framework.response import Response
 from rest_framework import status, viewsets
-from rest_framework.authtoken.models import Token 
-from .serializers import UserRegistrationSerializer, UserLoginSerializer
-from fts_app.models import Group, Permission
-from .models import CustomUser
+from rest_framework.authtoken.models import Token
 from rest_framework.authentication import TokenAuthentication
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.parsers import MultiPartParser, FormParser
+from .serializers import UserRegistrationSerializer, UserLoginSerializer
+from .models import CustomUser
 
-# API views for user registration, login, and logout
 class UserViewSet(viewsets.ViewSet):
-    queryset = CustomUser.objects.all()    
-    serializer_class = UserRegistrationSerializer
+    queryset = CustomUser.objects.all() 
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
-    
+    parser_classes = [MultiPartParser, FormParser]
+
     def get_permissions(self):
-        # Allow unrestricted access for specific actions
         if self.action in ['register', 'login']:
             return [AllowAny()]
-        return super().get_permissions()
+        return [IsAuthenticated()]
 
-    @action(detail=False, methods=['post'], url_path='register', permission_classes=[AllowAny])
+    @action(detail=False, methods=['post'], url_path='register')
     def register(self, request):
-        serializer = UserRegistrationSerializer(data=request.data)
+        serializer = UserRegistrationSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             user = serializer.save()
-
-            if 'groups' in request.data:
-                groups = request.data['groups']
-                group_objects = Group.objects.filter(id__in=groups)
-                user.groups.set(group_objects)
-
-            if 'user_permissions' in request.data:
-                permissions = request.data['user_permissions']
-                permission_objects = Permission.objects.filter(id__in=permissions)
-                user.user_permissions.set(permission_objects)
-
-            token, created = Token.objects.get_or_create(user=user)
-
+            token = Token.objects.create(user=user)
             return Response({
-                "id": user.id,
-                "username": user.username,
-                "email": user.email,
+                "user": {
+                    "id": user.id,
+                    "username": user.username,
+                    "email": user.email
+                },
                 "token": token.key
             }, status=status.HTTP_201_CREATED)
-
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['post'], url_path='login')
     def login(self, request):
         serializer = UserLoginSerializer(data=request.data)
         if serializer.is_valid():
-            user = serializer.validated_data
-            token, created = Token.objects.get_or_create(user=user)
+            user = serializer.validated_data['user']
+            token, _ = Token.objects.get_or_create(user=user)
             return Response({
-                "id": user.id,
-                "username": user.username,
-                "email": user.email,
-                "token": token.key  # Include the token in the response
+                "user": {
+                    "id": user.id,
+                    "username": user.username,
+                    "email": user.email
+                },
+                "token": token.key
             }, status=status.HTTP_200_OK)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
 
     @action(detail=False, methods=['post'], url_path='logout')
     def logout(self, request):
         request.user.auth_token.delete()
-        return Response(status=status.HTTP_200_OK)
+        return Response(
+            {"detail": "Successfully logged out"},
+            status=status.HTTP_200_OK
+        )
 
+    @action(detail=False, methods=['put', 'patch'], url_path='me')
+    def update_profile(self, request):
+        user = request.user
+        serializer = UserRegistrationSerializer(
+            user,
+            data=request.data,
+            partial=True,
+            context={'request': request}
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-# API views for fetching provinces, districts, and municipalities
+# Helper views for address data
+@api_view(['GET'])
+def get_provinces(request):
+    provinces = [choice[0] for choice in CustomUser.PROVINCE_CHOICES]
+    return Response(provinces, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
 def get_districts(request, province):
-    """
-    Fetch districts for the selected province. This doesn't depend on a logged-in user
-    as it's just static data related to the province.
-    """
-    # Directly call CustomUser's method without using request.user
-    districts = CustomUser().get_district_choices(province)
+    districts = CustomUser.get_district_choices(province)
     return Response(districts, status=status.HTTP_200_OK)
-
 
 @api_view(['GET'])
 def get_municipalities(request, province, district):
-    """
-    Fetch municipalities based on the selected province and district. 
-    This method should not depend on the logged-in user.
-    """
-    # Directly call CustomUser's method without using request.user
-    municipalities = CustomUser().get_municipality_choices(province, district)
+    municipalities = CustomUser.get_municipality_choices(province, district)
     return Response(municipalities, status=status.HTTP_200_OK)
-
-
-@api_view(['GET'])
-def get_provinces(request):
-    """
-    Fetch all available provinces.
-    """
-    provinces = [choice[0] for choice in CustomUser.PROVINCE_CHOICES]
-    return Response(provinces, status=status.HTTP_200_OK)

@@ -36,7 +36,7 @@ class Office(models.Model):
 class Awards(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField()
-    file = models.FileField(upload_to='awards/')
+    file = models.FileField(upload_to='awards/', null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -44,7 +44,7 @@ class Awards(models.Model):
 class Punishments(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField()
-    file= models.FileField(upload_to='punishments/')
+    file= models.FileField(upload_to='punishments/', null=True, blank=True)
 
     def __str__(self):
         return self.name    
@@ -63,7 +63,7 @@ class Education(models.Model):
     board = models.CharField(max_length=255)
     percentage = models.FloatField()
     year = models.IntegerField()
-    certificate = models.FileField(upload_to='education/')
+    certificate = models.FileField(upload_to='education/',null=True, blank=True)
     marksheets = models.FileField(upload_to='education/' , null=True, blank=True)
 
 
@@ -78,6 +78,12 @@ class Department(models.Model):
         return self.name
 
 class CustomUser(AbstractUser):
+    # Employee Type
+    EMPLOYEE_TYPE_CHOICES = [
+        ('Permanent', 'Permanent'),
+        ('Contract', 'Contract'),
+        ('Temporary', 'Temporary'),
+    ]
     # Static choices for Provinces (States) - 7 Provinces of Nepal
     PROVINCE_CHOICES = [
         ('Province 1', 'Province 1'),
@@ -168,7 +174,7 @@ class CustomUser(AbstractUser):
         ('Nepal Grameen Bikas Bank Ltd.', 'Nepal Grameen Bikas Bank Ltd.'),
         ('Nepal Infrastructure Bank Ltd. (NIFRA)', 'Nepal Infrastructure Bank Ltd. (NIFRA)'),
     ]
-
+    
     # These will be the dynamically filled fields based on selected province
     #Permanent Address
     perm_state = models.CharField(max_length=255, choices=PROVINCE_CHOICES)
@@ -186,8 +192,8 @@ class CustomUser(AbstractUser):
     citizenship_id = models.CharField(max_length=255, unique=True)
     citizenship_date_of_issue = models.DateField()
     citizenship_district = models.CharField(max_length=255)
-    citizenship_front_image = models.ImageField(upload_to='citizenship/')
-    citizenship_back_image = models.ImageField(upload_to='citizenship/')
+    citizenship_front_image = models.ImageField(upload_to='citizenship/', blank=True , null=True)
+    citizenship_back_image = models.ImageField(upload_to='citizenship/', blank=True , null=True)
 
    # Personal details 
     home_number = models.CharField(max_length=255)
@@ -201,6 +207,7 @@ class CustomUser(AbstractUser):
     
     # Employee details
     empolyee_id = models.CharField(max_length=255)
+    employee_type = models.CharField(max_length=255, choices=EMPLOYEE_TYPE_CHOICES)
     na_la_kos_no = models.CharField(max_length=255)
     accumulation_fund_no = models.CharField(max_length=255)
     bank_account_no = models.CharField(max_length=255)
