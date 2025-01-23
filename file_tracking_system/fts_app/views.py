@@ -3,13 +3,25 @@ from rest_framework.permissions import AllowAny
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status, viewsets
-from rest_framework.authtoken.models import Token
+from rest_framework.authtoken.models import Token 
 from .serializers import UserRegistrationSerializer, UserLoginSerializer
 from fts_app.models import Group, Permission
 from .models import CustomUser
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
 
-
+# API views for user registration, login, and logout
 class UserViewSet(viewsets.ViewSet):
+    queryset = CustomUser.objects.all()    
+    serializer_class = UserRegistrationSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    
+    def get_permissions(self):
+        # Allow unrestricted access for specific actions
+        if self.action in ['register', 'login']:
+            return [AllowAny()]
+        return super().get_permissions()
 
     @action(detail=False, methods=['post'], url_path='register', permission_classes=[AllowAny])
     def register(self, request):
@@ -58,6 +70,8 @@ class UserViewSet(viewsets.ViewSet):
         request.user.auth_token.delete()
         return Response(status=status.HTTP_200_OK)
 
+
+# API views for fetching provinces, districts, and municipalities
 
 @api_view(['GET'])
 def get_districts(request, province):
