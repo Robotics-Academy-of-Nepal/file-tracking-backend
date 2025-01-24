@@ -5,18 +5,8 @@ from rest_framework.authtoken.models import Token
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
-from .serializers import (
-    UserRegistrationSerializer,
-    UserLoginSerializer,
-    UserProfileSerializer,
-    LoanSerializer,
-    EducationSerializer,
-    AwardsSerializer,
-    PunishmentsSerializer,
-    OfficeSerializer
-)
-from .models import CustomUser, Loan, Education, Awards, Punishments, Office
-
+from .serializers import UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer
+from .models import CustomUser
 
 class UserViewSet(viewsets.ViewSet):
     authentication_classes = [TokenAuthentication]
@@ -144,28 +134,3 @@ def get_municipalities(request, province, district):
         return Response({"error": "Invalid district"}, status=status.HTTP_400_BAD_REQUEST)
     municipalities = CustomUser.get_municipality_choices(province, district)
     return Response(municipalities, status=status.HTTP_200_OK)
-
-
-# Example views for other models (optional)
-class LoanViewSet(viewsets.ModelViewSet):
-    queryset = Loan.objects.all()
-    serializer_class = LoanSerializer
-
-
-class EducationViewSet(viewsets.ModelViewSet):
-    queryset = Education.objects.all()
-    serializer_class = EducationSerializer
-
-class AwardsViewSet(viewsets.ModelViewSet):
-    queryset = Awards.objects.all()
-    serializer_class = AwardsSerializer
-
-
-class PunishmentsViewSet(viewsets.ModelViewSet):
-    queryset = Punishments.objects.all()
-    serializer_class = PunishmentsSerializer
-
-
-class OfficeViewSet(viewsets.ModelViewSet):
-    queryset = Office.objects.all()
-    serializer_class = OfficeSerializer

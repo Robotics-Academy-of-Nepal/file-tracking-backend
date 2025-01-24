@@ -2,6 +2,10 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model, authenticate
 from django.core.exceptions import ValidationError
 from .models import CustomUser, Loan, Education, Awards, Punishments, Office
+from django.contrib.auth import get_user_model
+from .models import CustomUser, Loan, Education, Awards, Punishments, Office, Designation, Tippani, LettersAndDocuments, \
+    File, Approval
+from django.contrib.auth import authenticate
 
 CustomUser = get_user_model()
 
@@ -183,4 +187,34 @@ class UserProfileSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = CustomUser
+        fields = '__all__'
+
+
+class DesignationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Designation
+        fields = '__all__'
+
+
+class TippaniSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tippani
+        fields = '__all__'
+
+
+class LettersAndDocumentsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LettersAndDocuments
+        fields = '__all__'
+
+
+class FileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = File
+        fields = '__all__'  # ['id', 'file']
+
+
+class ApprovalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Approval
         fields = '__all__'
