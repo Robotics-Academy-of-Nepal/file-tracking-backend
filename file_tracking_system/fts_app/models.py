@@ -320,3 +320,66 @@ class CustomUser(AbstractUser):
         return district_municipality_data.get(district, [])
 
 
+class Designation(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+
+    def __str__(self):
+        return self.name
+
+
+class Tippani(models.Model):
+    # file = models.ForeignKey(File, on_delete=models.CASCADE, related_name='tippanis')
+    present_file = models.FileField()
+    present_subject = models.CharField(max_length=255)
+    present_by = models.CharField(max_length=200)
+    present_date = models.DateField()
+    page_no = models.IntegerField()
+    total_page = models.IntegerField()
+    approved_by = models.CharField(max_length=200, null=True, blank=True)
+    approve_date = models.DateField(null=True, blank=True)
+
+    def __str__(self):
+        return f"Tippani for File {self.present_file.name if self.present_file else 'No File'}"
+
+
+class LettersAndDocuments(models.Model):
+    tippani = models.ForeignKey(Tippani, on_delete=models.CASCADE, related_name='letterandocuments')
+    registration_no = models.CharField(max_length=100)
+    invoice_no = models.CharField(max_length=100)
+    date = models.DateField()
+    subject = models.TextField()
+    letter_date = models.DateField()
+    sending_office = models.CharField(max_length=300)
+    receiving_office = models.CharField(max_length=300)
+    page_no = models.IntegerField()
+
+    def __str__(self):
+        return f"Document: {self.subject} (Reg No: {self.registration_no})"
+
+
+class File(models.Model):
+    letter_document = models.ForeignKey(LettersAndDocuments, on_delete=models.CASCADE, related_name='files', null=True)
+    file = models.FileField(upload_to='supporting_files/', null=True)
+
+    def __str__(self):
+        return self.file
+
+
+class Approval(models.Model):
+    STATUS_CHOICES = [
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+        ('transferred', 'Transferred'),
+        ('pending', 'Pending'),
+    ]
+
+    tippani = models.ForeignKey(Tippani, on_delete=models.CASCADE, related_name='approvals')
+    submitted_by = models.ForeignKey(Designation, on_delete=models.CASCADE, related_name='submitted_tippanis')
+    approved_by = models.ForeignKey(Designation, on_delete=models.CASCADE, related_name='approved_tippanis', null=True,
+                                    blank=True)
+    status = models.CharField(max_length=100, choices=STATUS_CHOICES, default='pending')
+    remarks = models.TextField(null=True, blank=True)
+    approved_date = models.DateField(null=True, blank=True)
+
+    def __str__(self):
+        return self.tippani

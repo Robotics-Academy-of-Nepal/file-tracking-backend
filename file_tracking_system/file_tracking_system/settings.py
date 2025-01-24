@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/3.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
-
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -25,7 +25,7 @@ SECRET_KEY = 'lnj*qt__7z$y^)86qwmgtfw2c_d*xb9(60vbik%&7l*i@gvp@^'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -41,12 +41,13 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'fts_app', 
-
+    'corsheaders',
 
 
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -89,16 +90,16 @@ WSGI_APPLICATION = 'file_tracking_system.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
-DATABASES = {# postgresql
+DATABASES = {  # postgresql
     # connection to postgresql db
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'fts_db',
-        'USER': 'postgres',
-        'PASSWORD': 'Nik@ce123',
+        'USER': 'myuser',
+        'PASSWORD': 'mypassword',
         'HOST': 'localhost',
-        'PORT': '5433',   
-        
+        'PORT': '5433',
+
     }
 }
 
@@ -122,6 +123,8 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 AUTH_USER_MODEL = 'fts_app.CustomUser'
+
+CORS_ALLOW_ALL_ORIGINS = True
     
 # Internationalization
 # https://docs.djangoproject.com/en/3.1/topics/i18n/
@@ -141,4 +144,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
