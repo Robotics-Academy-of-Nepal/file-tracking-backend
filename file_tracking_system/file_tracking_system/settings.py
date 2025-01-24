@@ -95,8 +95,8 @@ DATABASES = {  # postgresql
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'fts_db',
-        'USER': 'myuser',
-        'PASSWORD': 'mypassword',
+        'USER': 'postgres',
+        'PASSWORD': 'Nik@ce123',
         'HOST': 'localhost',
         'PORT': '5433',
 
