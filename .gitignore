@@ -1,5 +1,7 @@
 env/
 migrations/
-
+*.jpg
+*.jpeg
+*.png
 *.pyc
 *.sqlite3

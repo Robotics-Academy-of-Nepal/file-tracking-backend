@@ -9,7 +9,6 @@ from .serializers import UserRegistrationSerializer, UserLoginSerializer
 from .models import CustomUser
 
 class UserViewSet(viewsets.ViewSet):
-    queryset = CustomUser.objects.all() 
     authentication_classes = [TokenAuthentication]
     parser_classes = [MultiPartParser, FormParser]
 
@@ -23,12 +22,14 @@ class UserViewSet(viewsets.ViewSet):
         serializer = UserRegistrationSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             user = serializer.save()
-            token = Token.objects.create(user=user)
+            token, _ = Token.objects.get_or_create(user=user)
             return Response({
                 "user": {
                     "id": user.id,
                     "username": user.username,
-                    "email": user.email
+                    "email": user.email,
+                    "employee_id": user.employee_id,
+                    "position": user.position
                 },
                 "token": token.key
             }, status=status.HTTP_201_CREATED)
@@ -44,7 +45,9 @@ class UserViewSet(viewsets.ViewSet):
                 "user": {
                     "id": user.id,
                     "username": user.username,
-                    "email": user.email
+                    "email": user.email,
+                    "employee_id": user.employee_id,
+                    "position": user.position
                 },
                 "token": token.key
             }, status=status.HTTP_200_OK)

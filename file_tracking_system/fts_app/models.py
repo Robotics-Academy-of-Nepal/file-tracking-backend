@@ -36,7 +36,7 @@ class Office(models.Model):
 class Awards(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField()
-    file = models.FileField(upload_to='awards/', null=True, blank=True)
+    file = models.FileField(upload_to='awards/')
 
     def __str__(self):
         return self.name
@@ -44,7 +44,7 @@ class Awards(models.Model):
 class Punishments(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField()
-    file= models.FileField(upload_to='punishments/', null=True, blank=True)
+    file= models.FileField(upload_to='punishments/')
 
     def __str__(self):
         return self.name    
@@ -63,8 +63,8 @@ class Education(models.Model):
     board = models.CharField(max_length=255)
     percentage = models.FloatField()
     year = models.IntegerField()
-    certificate = models.FileField(upload_to='education/',null=True, blank=True)
-    marksheets = models.FileField(upload_to='education/' , null=True, blank=True)
+    certificate = models.FileField(upload_to='education/')
+    marksheets = models.FileField(upload_to='education/')
 
 
     def __str__(self):
@@ -190,25 +190,25 @@ class CustomUser(AbstractUser):
 
     # Citizenship details
     citizenship_id = models.CharField(max_length=255, unique=True)
-    citizenship_date_of_issue = models.DateField()
+    citizenship_date_of_issue = models.DateField(null=True, blank=True)
     citizenship_district = models.CharField(max_length=255)
-    citizenship_front_image = models.ImageField(upload_to='citizenship/', blank=True , null=True)
-    citizenship_back_image = models.ImageField(upload_to='citizenship/', blank=True , null=True)
+    citizenship_front_image = models.ImageField(upload_to='citizenship/')
+    citizenship_back_image = models.ImageField(upload_to='citizenship/')
 
    # Personal details 
     home_number = models.CharField(max_length=255)
-    phone_number = models.CharField(max_length=255)
+    phone_number = models.CharField(max_length=255) 
     mobile_number = models.CharField(max_length=255)
-    date_joined = models.DateTimeField()
-    recess_date = models.DateTimeField()
+    date_joined = models.DateTimeField(null=True, blank=True)
+    recess_date = models.DateTimeField(null=True, blank=True)
     position = models.CharField(max_length=255)
     position_category = models.CharField(max_length=255, choices=position_category_choices)
 
     
     # Employee details
-    empolyee_id = models.CharField(max_length=255)
+    employee_id = models.CharField(max_length=255, unique=True)
     employee_type = models.CharField(max_length=255, choices=EMPLOYEE_TYPE_CHOICES)
-    na_la_kos_no = models.CharField(max_length=255)
+    na_la_kos_no = models.CharField(max_length=255, )
     accumulation_fund_no = models.CharField(max_length=255)
     bank_account_no = models.CharField(max_length=255)
     bank_name = models.CharField(max_length=255, choices=BANK_CHOICES)
