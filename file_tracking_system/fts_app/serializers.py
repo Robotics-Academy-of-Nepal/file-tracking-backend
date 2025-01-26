@@ -1,9 +1,7 @@
 from rest_framework import serializers
-from django.contrib.auth import get_user_model
-from .models import CustomUser, Loan, Education, Awards, Punishments, Office, Designation, Tippani, LettersAndDocuments, \
-    File, Approval
-from django.contrib.auth import authenticate
+from django.contrib.auth import get_user_model, authenticate
 from django.core.exceptions import ValidationError
+from .models import CustomUser, Loan, Education, Awards, Punishments, Office
 
 CustomUser = get_user_model()
 
@@ -13,25 +11,30 @@ class LoanSerializer(serializers.ModelSerializer):
         model = Loan
         fields = '__all__'
 
+
 class EducationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Education
         fields = '__all__'
+
 
 class AwardsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Awards
         fields = '__all__'
 
+
 class PunishmentsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Punishments
         fields = '__all__'
 
+
 class OfficeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Office
         fields = '__all__'
+
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     # Handle nested relationships as writable fields
@@ -43,36 +46,32 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = [
-            # User fields
-            'username', 'password', 'email', 
-            # Address fields
-            'perm_state', 'perm_district', 'perm_municipality', 'perm_ward_no',
-            'temp_state', 'temp_district', 'temp_municipality', 'temp_ward_no',
-            # Citizenship details
-            'citizenship_id', 'citizenship_date_of_issue', 'citizenship_district',
-            'citizenship_front_image', 'citizenship_back_image',
-            # Contact info
-            'home_number', 'phone_number', 'mobile_number',
-            # Employment details
-            'employee_id', 'employee_type', 'na_la_kos_no', 'accumulation_fund_no',
-            'bank_account_no', 'bank_name', 'position', 'position_category',
-            # Dates
-            'date_joined', 'recess_date',
-            # Nested relationships
-            'loan', 'education', 'awards', 'punishments', 'office'
-        ]
+        fields = '__all__'
         extra_kwargs = {
             'password': {'write_only': True},
             'citizenship_id': {'required': True},
             'employee_id': {'required': True},
         }
 
+    def validate(self, data):
+        """
+        Validate the data before creating or updating a user.
+        """
+        # Ensure required fields are present
+        if 'citizenship_id' not in data:
+            raise ValidationError("Citizenship ID is required.")
+        if 'employee_id' not in data:
+            raise ValidationError("Employee ID is required.")
+        return data
+
     def create(self, validated_data):
+        """
+        Create a new user with nested relationships.
+        """
         # Extract nested data
         education_data = validated_data.pop('education', None)
-        awards_data = validated_data.pop('awards', [])  # Default to empty list
-        punishments_data = validated_data.pop('punishments', [])  # Default to empty list
+        awards_data = validated_data.pop('awards', None)
+        punishments_data = validated_data.pop('punishments', None)
         loan_data = validated_data.pop('loan', None)
         office_data = validated_data.pop('office', None)
 
@@ -82,42 +81,38 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         user.set_password(password)
         user.save()
 
-        # Create and link education
+        # Create and link nested objects
         if education_data:
             education = Education.objects.create(**education_data)
             user.education = education
 
-        # Create and link awards
-        for award_data in awards_data:  # This will work even if awards_data is an empty list
-            award = Awards.objects.create(**award_data)
-            user.awards.add(award)
+        if awards_data:
+            award = Awards.objects.create(**awards_data)
+            user.awards = award
 
-        # Create and link punishments
-        for punishment_data in punishments_data:  # This will work even if punishments_data is an empty list
-            punishment = Punishments.objects.create(**punishment_data)
-            user.punishments.add(punishment)
+        if punishments_data:
+            punishment = Punishments.objects.create(**punishments_data)
+            user.punishments = punishment
 
-        # Create and link loan
         if loan_data:
             loan = Loan.objects.create(**loan_data)
             user.loan = loan
 
-        # Create and link office
         if office_data:
             office = Office.objects.create(**office_data)
             user.office = office
 
         user.save()
         return user
-    
+
     def update(self, instance, validated_data):
         """
-        Update and return an existing user instance with nested relationships.
+        Update an existing user with nested relationships.
         """
         # Handle nested updates
         education_data = validated_data.pop('education', None)
-        awards_data = validated_data.pop('awards', [])
-        punishments_data = validated_data.pop('punishments', [])
+        awards_data = validated_data.pop('awards', None)
+        punishments_data = validated_data.pop('punishments', None)
         loan_data = validated_data.pop('loan', None)
         office_data = validated_data.pop('office', None)
 
@@ -137,15 +132,13 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
         if awards_data:
             instance.awards.clear()
-            for award_data in awards_data:
-                award = Awards.objects.create(**award_data)
-                instance.awards.add(award)
+            award = Awards.objects.create(**awards_data)
+            instance.awards = award
 
         if punishments_data:
             instance.punishments.clear()
-            for punishment_data in punishments_data:
-                punishment = Punishments.objects.create(**punishment_data)
-                instance.punishments.add(punishment)
+            punishment = Punishments.objects.create(**punishments_data)
+            instance.punishments = punishment
 
         if loan_data:
             loan_serializer = LoanSerializer(instance.loan, data=loan_data, partial=True)
@@ -160,6 +153,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
+
 class UserLoginSerializer(serializers.Serializer):
     username = serializers.CharField()
     password = serializers.CharField(write_only=True)
@@ -168,44 +162,25 @@ class UserLoginSerializer(serializers.Serializer):
         """
         Validate user credentials.
         """
-        user = authenticate(username=data['username'], password=data['password'])
-        if not user:
-            raise ValidationError("Invalid credentials")
+        username = data.get('username')
+        password = data.get('password')
 
-        if not user.is_active:
-            raise ValidationError("User account is disabled")
+        if username and password:
+            user = authenticate(username=username, password=password)
+            if user:
+                if not user.is_active:
+                    raise ValidationError("User account is disabled.")
+                return {'user': user}
+            else:
+                raise ValidationError("Invalid credentials.")
+        else:
+            raise ValidationError("Must include 'username' and 'password'.")
 
-        return {
-            'user': user,
-            'token': user.auth_token.key
-        }
 
-
-class DesignationSerializer(serializers.ModelSerializer):
+class UserProfileSerializer(serializers.ModelSerializer):
+    """
+    Serializer for updating user profile information.
+    """
     class Meta:
-        model = Designation
-        fields = '__all__'
-
-
-class TippaniSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Tippani
-        fields = '__all__'
-
-
-class LettersAndDocumentsSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = LettersAndDocuments
-        fields = '__all__'
-
-
-class FileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = File
-        fields = '__all__'  # ['id', 'file']
-
-
-class ApprovalSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Approval
+        model = CustomUser
         fields = '__all__'
