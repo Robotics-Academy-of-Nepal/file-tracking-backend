@@ -5,8 +5,8 @@ from rest_framework.authtoken.models import Token
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
-from .serializers import UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer
-from .models import CustomUser
+from .serializers import UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer , TippaniSerializer, LettersAndDocumentsSerializer, FileSerializer, DesignationSerializer, ApprovalSerializer
+from .models import CustomUser, Approval, Designation, File , LettersAndDocuments, Tippani
 
 class UserViewSet(viewsets.ViewSet):
     authentication_classes = [TokenAuthentication]
@@ -134,3 +134,51 @@ def get_municipalities(request, province, district):
         return Response({"error": "Invalid district"}, status=status.HTTP_400_BAD_REQUEST)
     municipalities = CustomUser.get_municipality_choices(province, district)
     return Response(municipalities, status=status.HTTP_200_OK)
+
+
+
+
+class TippaniViewSet(viewsets.ModelViewSet):
+    queryset = Tippani.objects.all()
+    serializer_class = TippaniSerializer
+
+
+class LettersAndDocumentsViewSet(viewsets.ModelViewSet):
+    queryset = LettersAndDocuments.objects.all()
+    serializer_class = LettersAndDocumentsSerializer
+
+    def get_queryset(self):
+        queryset = LettersAndDocuments.objects.all()
+        tippani_id = self.request.query_params.get('tippani_id', None)
+        if tippani_id is not None:
+            queryset = queryset.filter(tippani_id=tippani_id)
+        return queryset
+
+
+class FileViewSet(viewsets.ModelViewSet):
+    queryset = File.objects.all()
+    serializer_class = FileSerializer
+
+    def get_queryset(self):
+        queryset = File.objects.all()
+        letter_document_id = self.request.query_params.get('letter_document_id', None)
+        if letter_document_id is not None:
+            queryset = queryset.filter(letter_document_id=letter_document_id)
+        return queryset
+
+
+class DesignationViewSet(viewsets.ModelViewSet):
+    queryset = Designation.objects.all()
+    serializer_class = DesignationSerializer
+
+
+class ApprovalViewSet(viewsets.ModelViewSet):
+    queryset = Approval.objects.all()
+    serializer_class = ApprovalSerializer
+
+    def get_queryset(self):
+        queryset = Approval.objects.all()
+        tippani_id = self.request.query_params.get('tippani_id', None)
+        if tippani_id is not None:
+            queryset = queryset.filter(tippani_id=tippani_id)
+        return queryset
