@@ -1,231 +1,380 @@
 from django.contrib.auth.models import AbstractUser, Group, Permission
 from django.db import models
+from django.core.validators import MinValueValidator, MaxValueValidator
+from django.utils.translation import gettext_lazy as _
 
 class Loan(models.Model):
-    Loan_Choices = [
-        ('Home Loan', 'Home Loan'),
-        ('Pregnancy Loan', 'Pregnancy Loan'),
-        ('Other Loan', 'Other Loan'),
-    ]
-    
-    loan_type = models.CharField(max_length=255, choices=Loan_Choices)
-    name = models.CharField(max_length=255)
-    interest_rate = models.FloatField()
-    max_amount = models.FloatField()
-    min_amount = models.FloatField()
-    max_tenure = models.IntegerField()
-    min_tenure = models.IntegerField()
+    class LoanType(models.TextChoices):
+        HOME_LOAN = 'Home Loan', _('Home Loan')
+        PREGNANCY_LOAN = 'Pregnancy Loan', _('Pregnancy Loan')
+        OTHER_LOAN = 'Other Loan', _('Other Loan')
+
+    loan_type = models.CharField(
+        max_length=255,
+        choices=LoanType.choices,
+        verbose_name=_('Loan Type')
+    )
+    name = models.CharField(max_length=255, verbose_name=_('Loan Name'))
+    interest_rate = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        verbose_name=_('Interest Rate'),
+        validators=[MinValueValidator(0), MaxValueValidator(100)]
+    )
+    max_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name=_('Maximum Amount')
+    )
+    min_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name=_('Minimum Amount')
+    )
+    max_tenure = models.PositiveIntegerField(verbose_name=_('Maximum Tenure (Months)'))
+    min_tenure = models.PositiveIntegerField(verbose_name=_('Minimum Tenure (Months)'))
+
+    class Meta:
+        verbose_name = _('Loan')
+        verbose_name_plural = _('Loans')
 
     def __str__(self):
         return self.name
+
 
 class Office(models.Model):
-    position_category_choices = [
-        ('Darbandi', 'Darbandi'),
-        ('Kaaj', 'Kaaj'),
-    ]
+    class PositionCategory(models.TextChoices):
+        DARBANDI = 'Darbandi', _('Darbandi')
+        KAAJ = 'Kaaj', _('Kaaj')
 
-    duration = models.DurationField()
-    office_name = models.CharField(max_length=255)
-    position = models.CharField(max_length=255)
-    position_category = models.CharField(max_length=255, choices=position_category_choices)
+    duration = models.DurationField(verbose_name=_('Duration'))
+    office_name = models.CharField(max_length=255, verbose_name=_('Office Name'))
+    position = models.CharField(max_length=255, verbose_name=_('Position'))
+    position_category = models.CharField(
+        max_length=255,
+        choices=PositionCategory.choices,
+        verbose_name=_('Position Category')
+    )
+
+    class Meta:
+        verbose_name = _('Office')
+        verbose_name_plural = _('Offices')
 
     def __str__(self):
-        return self.name
-    
+        return self.office_name
+
+
 class Awards(models.Model):
-    name = models.CharField(max_length=255)
-    description = models.TextField()
-    file = models.FileField(upload_to='awards/')
+    name = models.CharField(max_length=255, verbose_name=_('Award Name'))
+    description = models.TextField(verbose_name=_('Description'))
+    file = models.FileField(
+        upload_to='awards/%Y/%m/%d/',
+        null=True,
+        blank=True,
+        verbose_name=_('Award File')
+    )
+
+    class Meta:
+        verbose_name = _('Award')
+        verbose_name_plural = _('Awards')
 
     def __str__(self):
         return self.name
-    
+
+
 class Punishments(models.Model):
-    name = models.CharField(max_length=255)
-    description = models.TextField()
-    file= models.FileField(upload_to='punishments/')
+    name = models.CharField(max_length=255, verbose_name=_('Punishment Name'))
+    description = models.TextField(verbose_name=_('Description'))
+    file = models.FileField(
+        upload_to='punishments/%Y/%m/%d/',
+        null=True,
+        blank=True,
+        verbose_name=_('Punishment File')
+    )
+
+    class Meta:
+        verbose_name = _('Punishment')
+        verbose_name_plural = _('Punishments')
 
     def __str__(self):
-        return self.name    
-    
-class Education(models.Model):
-    Education_Choices = [
-        ('SLC', 'SLC'),
-        ('+2', '+2'),
-        ('Bachelor', 'Bachelor'),
-        ('Master', 'Master'),
-        ('PhD', 'PhD'),
-    ]
-    
-    education_level = models.CharField(max_length=255, choices=Education_Choices)
-    institution = models.CharField(max_length=255)
-    board = models.CharField(max_length=255)
-    percentage = models.FloatField()
-    year = models.IntegerField()
-    certificate = models.FileField(upload_to='education/')
-    marksheets = models.FileField(upload_to='education/')
+        return self.name
 
+
+class Education(models.Model):
+    class EducationLevel(models.TextChoices):
+        SLC = 'SLC', _('SLC')
+        PLUS_TWO = '+2', _('+2')
+        BACHELOR = 'Bachelor', _('Bachelor')
+        MASTER = 'Master', _('Master')
+        PHD = 'PhD', _('PhD')
+
+    education_level = models.CharField(
+        max_length=255,
+        choices=EducationLevel.choices,
+        verbose_name=_('Education Level')
+    )
+    institution = models.CharField(max_length=255, verbose_name=_('Institution'))
+    board = models.CharField(max_length=255, verbose_name=_('Board'))
+    percentage = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        verbose_name=_('Percentage'),
+        validators=[MinValueValidator(0), MaxValueValidator(100)]
+    )
+    year = models.PositiveIntegerField(verbose_name=_('Year'))
+    certificate = models.FileField(
+        upload_to='education/certificates/%Y/%m/%d/',
+        null=True,
+        blank=True,
+        verbose_name=_('Certificate')
+    )
+    marksheets = models.FileField(
+        upload_to='education/marksheets/%Y/%m/%d/',
+        null=True,
+        blank=True,
+        verbose_name=_('Marksheets')
+    )
+
+    class Meta:
+        verbose_name = _('Education')
+        verbose_name_plural = _('Educations')
 
     def __str__(self):
         return self.institution
 
+
 class Department(models.Model):
-    name = models.CharField(max_length=255)
-    description = models.TextField()
+    name = models.CharField(max_length=255, verbose_name=_('Department Name'))
+    description = models.TextField(verbose_name=_('Description'))
+
+    class Meta:
+        verbose_name = _('Department')
+        verbose_name_plural = _('Departments')
 
     def __str__(self):
         return self.name
 
+
 class CustomUser(AbstractUser):
-    # Employee Type
-    EMPLOYEE_TYPE_CHOICES = [
-        ('Permanent', 'Permanent'),
-        ('Contract', 'Contract'),
-        ('Temporary', 'Temporary'),
-    ]
-    # Static choices for Provinces (States) - 7 Provinces of Nepal
-    PROVINCE_CHOICES = [
-        ('Province 1', 'Province 1'),
-        ('Province 2', 'Province 2'),
-        ('Province 3', 'Province 3'),
-        ('Province 4', 'Province 4'),
-        ('Province 5', 'Province 5'),
-        ('Province 6', 'Province 6'),
-        ('Province 7', 'Province 7'),
-    ]
+    class EmployeeType(models.TextChoices):
+        PERMANENT = 'Permanent', _('Permanent')
+        CONTRACT = 'Contract', _('Contract')
+        TEMPORARY = 'Temporary', _('Temporary')
 
-    position_category_choices = [
-        ('Darbandi', 'Darbandi'),
-        ('Kaaj', 'Kaaj'),
-    ]
+    class Province(models.TextChoices):
+        PROVINCE_1 = 'Province 1', _('Province 1')
+        PROVINCE_2 = 'Province 2', _('Province 2')
+        PROVINCE_3 = 'Province 3', _('Province 3')
+        PROVINCE_4 = 'Province 4', _('Province 4')
+        PROVINCE_5 = 'Province 5', _('Province 5')
+        PROVINCE_6 = 'Province 6', _('Province 6')
+        PROVINCE_7 = 'Province 7', _('Province 7')
 
-    BANK_CHOICES = [
-        ('Nepal Bank Ltd.', 'Nepal Bank Ltd.'),
-        ('Agriculture Development Bank Ltd.', 'Agriculture Development Bank Ltd.'),
-        ('Nabil Bank Ltd.', 'Nabil Bank Ltd.'),
-        ('Nepal Investment Bank Ltd.', 'Nepal Investment Bank Ltd.'),
-        ('Standard Chartered Bank Nepal Ltd.', 'Standard Chartered Bank Nepal Ltd.'),
-        ('Himalayan Bank Ltd.', 'Himalayan Bank Ltd.'),
-        ('Nepal SBI Bank Ltd.', 'Nepal SBI Bank Ltd.'),
-        ('Everest Bank Ltd.', 'Everest Bank Ltd.'),
-        ('NIC ASIA Bank Ltd.', 'NIC ASIA Bank Ltd.'),
-        ('Machhapuchchhre Bank Ltd.', 'Machhapuchchhre Bank Ltd.'),
-        ('Kumari Bank Ltd.', 'Kumari Bank Ltd.'),
-        ('Laxmi Bank Ltd.', 'Laxmi Bank Ltd.'),
-        ('Siddhartha Bank Ltd.', 'Siddhartha Bank Ltd.'),
-        ('Global IME Bank Ltd.', 'Global IME Bank Ltd.'),
-        ('Citizens Bank International Ltd.', 'Citizens Bank International Ltd.'),
-        ('Prime Commercial Bank Ltd.', 'Prime Commercial Bank Ltd.'),
-        ('NMB Bank Ltd.', 'NMB Bank Ltd.'),
-        ('Prabhu Bank Ltd.', 'Prabhu Bank Ltd.'),
-        ('Sanima Bank Ltd.', 'Sanima Bank Ltd.'),
-        ('Mahalaxmi Bikas Bank Ltd.', 'Mahalaxmi Bikas Bank Ltd.'),
-        ('Narayani Development Bank Ltd.', 'Narayani Development Bank Ltd.'),
-        ('Karnali Development Bank Ltd.', 'Karnali Development Bank Ltd.'),
-        ('Shangrila Development Bank Ltd.', 'Shangrila Development Bank Ltd.'),
-        ('Excel Development Bank Ltd.', 'Excel Development Bank Ltd.'),
-        ('Miteri Development Bank Ltd.', 'Miteri Development Bank Ltd.'),
-        ('Muktinath Bikas Bank Ltd.', 'Muktinath Bikas Bank Ltd.'),
-        ('Garima Bikas Bank Ltd.', 'Garima Bikas Bank Ltd.'),
-        ('Kamana Sewa Bikas Bank Ltd.', 'Kamana Sewa Bikas Bank Ltd.'),
-        ('Corporate Development Bank Ltd.', 'Corporate Development Bank Ltd.'),
-        ('Jyoti Bikas Bank Ltd.', 'Jyoti Bikas Bank Ltd.'),
-        ('Shine Resunga Development Bank Ltd.', 'Shine Resunga Development Bank Ltd.'),
-        ('Lumbini Bikas Bank Ltd.', 'Lumbini Bikas Bank Ltd.'),
-        ('Sindhu Bikas Bank Ltd.', 'Sindhu Bikas Bank Ltd.'),
-        ('Salapa Bikas Bank Ltd.', 'Salapa Bikas Bank Ltd.'),
-        ('Saptakoshi Development Bank Ltd.', 'Saptakoshi Development Bank Ltd.'),
-        ('Green Development Bank Ltd.', 'Green Development Bank Ltd.'),
-        ('Nepal Finance Ltd.', 'Nepal Finance Ltd.'),
-        ('Nepal Share Markets and Finance Ltd.', 'Nepal Share Markets and Finance Ltd.'),
-        ('Gurkhas Finance Ltd.', 'Gurkhas Finance Ltd.'),
-        ('Goodwill Finance Ltd.', 'Goodwill Finance Ltd.'),
-        ('Shree Investment & Finance Co.', 'Shree Investment & Finance Co.'),
-        ('Best Finance Ltd.', 'Best Finance Ltd.'),
-        ('Capital Merchant Banking & Finance Ltd.', 'Capital Merchant Banking & Finance Ltd.'),
-        ('Central Finance Ltd.', 'Central Finance Ltd.'),
-        ('Gorkhas Finance Ltd.', 'Gorkhas Finance Ltd.'),
-        ('Guheshwori Merchant Banking & Finance Ltd.', 'Guheshwori Merchant Banking & Finance Ltd.'),
-        ('ICFC Finance Ltd.', 'ICFC Finance Ltd.'),
-        ('Janaki Finance Co. Ltd.', 'Janaki Finance Co. Ltd.'),
-        ('Manjushree Finance Ltd.', 'Manjushree Finance Ltd.'),
-        ('Multipurpose Finance Co. Ltd.', 'Multipurpose Finance Co. Ltd.'),
-        ('Pokhara Finance Ltd.', 'Pokhara Finance Ltd.'),
-        ('Progressive Finance Ltd.', 'Progressive Finance Ltd.'),
-        ('Reliance Finance Ltd.', 'Reliance Finance Ltd.'),
-        ('Samridhhi Finance Co. Ltd.', 'Samridhhi Finance Co. Ltd.'),
-        ('Shree Investment & Finance Co.', 'Shree Investment & Finance Co.'),
-        ('Nepal Bangladesh Bank Ltd.', 'Nepal Bangladesh Bank Ltd.'),
-        ('Nepal Bank Ltd.', 'Nepal Bank Ltd.'),
-        ('Nepal Credit and Commerce Bank Ltd.', 'Nepal Credit and Commerce Bank Ltd.'),
-        ('Nepal Finance Ltd.', 'Nepal Finance Ltd.'),
-        ('Nepal Investment Bank Ltd.', 'Nepal Investment Bank Ltd.'),
-        ('Nepal Rastra Bank', 'Nepal Rastra Bank'),
-        ('Nepal SBI Bank Ltd.', 'Nepal SBI Bank Ltd.'),
-        ('Nepal Grameen Bikas Bank Ltd.', 'Nepal Grameen Bikas Bank Ltd.'),
-        ('Nepal Infrastructure Bank Ltd. (NIFRA)', 'Nepal Infrastructure Bank Ltd. (NIFRA)'),
-        ('Nepal Rastra Bank', 'Nepal Rastra Bank'),
-        ('Nepal SBI Bank Ltd.', 'Nepal SBI Bank Ltd.'),
-        ('Nepal Grameen Bikas Bank Ltd.', 'Nepal Grameen Bikas Bank Ltd.'),
-        ('Nepal Infrastructure Bank Ltd. (NIFRA)', 'Nepal Infrastructure Bank Ltd. (NIFRA)'),
-        ('Nepal Rastra Bank', 'Nepal Rastra Bank'),
-        ('Nepal SBI Bank Ltd.', 'Nepal SBI Bank Ltd.'),
-        ('Nepal Grameen Bikas Bank Ltd.', 'Nepal Grameen Bikas Bank Ltd.'),
-        ('Nepal Infrastructure Bank Ltd. (NIFRA)', 'Nepal Infrastructure Bank Ltd. (NIFRA)'),
-    ]
-    
-    # These will be the dynamically filled fields based on selected province
-    #Permanent Address
-    perm_state = models.CharField(max_length=255, choices=PROVINCE_CHOICES)
-    perm_district = models.CharField(max_length=255)
-    perm_municipality = models.CharField(max_length=255)
-    perm_ward_no = models.CharField(max_length=255)
+    class Bank(models.TextChoices):
+        NEPAL_BANK = 'Nepal Bank Ltd.', _('Nepal Bank Ltd.')
+        AGRICULTURE_BANK = 'Agriculture Development Bank Ltd.', _('Agriculture Development Bank Ltd.')
+        NABIL_BANK = 'Nabil Bank Ltd.', _('Nabil Bank Ltd.')
+        NEPAL_INVESTMENT_BANK = 'Nepal Investment Bank Ltd.', _('Nepal Investment Bank Ltd.')
+        STANDARD_CHARTERED = 'Standard Chartered Bank Nepal Ltd.', _('Standard Chartered Bank Nepal Ltd.')
+        HIMALAYAN_BANK = 'Himalayan Bank Ltd.', _('Himalayan Bank Ltd.')
+        NEPAL_SBI_BANK = 'Nepal SBI Bank Ltd.', _('Nepal SBI Bank Ltd.')
+        EVEREST_BANK = 'Everest Bank Ltd.', _('Everest Bank Ltd.')
+        NIC_ASIA_BANK = 'NIC ASIA Bank Ltd.', _('NIC ASIA Bank Ltd.')
+        MACHHAPUCHCHHRE_BANK = 'Machhapuchchhre Bank Ltd.', _('Machhapuchchhre Bank Ltd.')
+        KUMARI_BANK = 'Kumari Bank Ltd.', _('Kumari Bank Ltd.')
+        LAXMI_BANK = 'Laxmi Bank Ltd.', _('Laxmi Bank Ltd.')
+        SIDDHARTHA_BANK = 'Siddhartha Bank Ltd.', _('Siddhartha Bank Ltd.')
+        GLOBAL_IME_BANK = 'Global IME Bank Ltd.', _('Global IME Bank Ltd.')
+        CITIZENS_BANK = 'Citizens Bank International Ltd.', _('Citizens Bank International Ltd.')
+        PRIME_BANK = 'Prime Commercial Bank Ltd.', _('Prime Commercial Bank Ltd.')
+        NMB_BANK = 'NMB Bank Ltd.', _('NMB Bank Ltd.')
+        PRABHU_BANK = 'Prabhu Bank Ltd.', _('Prabhu Bank Ltd.')
+        SANIMA_BANK = 'Sanima Bank Ltd.', _('Sanima Bank Ltd.')
+        MAHALAXMI_BANK = 'Mahalaxmi Bikas Bank Ltd.', _('Mahalaxmi Bikas Bank Ltd.')
+        NARAYANI_BANK = 'Narayani Development Bank Ltd.', _('Narayani Development Bank Ltd.')
+        KARNALI_BANK = 'Karnali Development Bank Ltd.', _('Karnali Development Bank Ltd.')
+        SHANGRILLA_BANK = 'Shangrila Development Bank Ltd.', _('Shangrila Development Bank Ltd.')
+        EXCEL_BANK = 'Excel Development Bank Ltd.', _('Excel Development Bank Ltd.')
+        MITERI_BANK = 'Miteri Development Bank Ltd.', _('Miteri Development Bank Ltd.')
+        MUKTINATH_BANK = 'Muktinath Bikas Bank Ltd.', _('Muktinath Bikas Bank Ltd.')
+        GARIMA_BANK = 'Garima Bikas Bank Ltd.', _('Garima Bikas Bank Ltd.')
+        KAMANA_BANK = 'Kamana Sewa Bikas Bank Ltd.', _('Kamana Sewa Bikas Bank Ltd.')
+        CORPORATE_BANK = 'Corporate Development Bank Ltd.', _('Corporate Development Bank Ltd.')
+        JYOTI_BANK = 'Jyoti Bikas Bank Ltd.', _('Jyoti Bikas Bank Ltd.')
+        SHINE_RESUNGA_BANK = 'Shine Resunga Development Bank Ltd.', _('Shine Resunga Development Bank Ltd.')
+        LUMBINI_BANK = 'Lumbini Bikas Bank Ltd.', _('Lumbini Bikas Bank Ltd.')
+        SINDHU_BANK = 'Sindhu Bikas Bank Ltd.', _('Sindhu Bikas Bank Ltd.')
+        SALAPA_BANK = 'Salapa Bikas Bank Ltd.', _('Salapa Bikas Bank Ltd.')
+        SAPTAKOSHI_BANK = 'Saptakoshi Development Bank Ltd.', _('Saptakoshi Development Bank Ltd.')
+        GREEN_BANK = 'Green Development Bank Ltd.', _('Green Development Bank Ltd.')
+        NEPAL_FINANCE = 'Nepal Finance Ltd.', _('Nepal Finance Ltd.')
+        NEPAL_SHARE_MARKETS = 'Nepal Share Markets and Finance Ltd.', _('Nepal Share Markets and Finance Ltd.')
+        GURKHAS_FINANCE = 'Gurkhas Finance Ltd.', _('Gurkhas Finance Ltd.')
+        GOODWILL_FINANCE = 'Goodwill Finance Ltd.', _('Goodwill Finance Ltd.')
+        SHREE_INVESTMENT = 'Shree Investment & Finance Co.', _('Shree Investment & Finance Co.')
+        BEST_FINANCE = 'Best Finance Ltd.', _('Best Finance Ltd.')
+        CAPITAL_MERCHANT_BANKING = 'Capital Merchant Banking & Finance Ltd.', _('Capital Merchant Banking & Finance Ltd.')
+        CENTRAL_FINANCE = 'Central Finance Ltd.', _('Central Finance Ltd.')
+        GUHESHWORI_MERCHANT_BANKING = 'Guheshwori Merchant Banking & Finance Ltd.', _('Guheshwori Merchant Banking & Finance Ltd.')
+        ICFC_FINANCE = 'ICFC Finance Ltd.', _('ICFC Finance Ltd.')
+        JANAKI_FINANCE = 'Janaki Finance Co. Ltd.', _('Janaki Finance Co. Ltd.')
+        MANJUSHREE_FINANCE = 'Manjushree Finance Ltd.', _('Manjushree Finance Ltd.')
+        MULTIPURPOSE_FINANCE = 'Multipurpose Finance Co. Ltd.', _('Multipurpose Finance Co. Ltd.')
+        POKHARA_FINANCE = 'Pokhara Finance Ltd.', _('Pokhara Finance Ltd.')
+        PROGRESSIVE_FINANCE = 'Progressive Finance Ltd.', _('Progressive Finance Ltd.')
+        RELIANCE_FINANCE = 'Reliance Finance Ltd.', _('Reliance Finance Ltd.')
+        SAMRIDDHI_FINANCE = 'Samriddhi Finance Co. Ltd.', _('Samriddhi Finance Co. Ltd.')
+        NEPAL_BANGLADESH_BANK = 'Nepal Bangladesh Bank Ltd.', _('Nepal Bangladesh Bank Ltd.')
+        NEPAL_CREDIT_COMMERCE = 'Nepal Credit and Commerce Bank Ltd.', _('Nepal Credit and Commerce Bank Ltd.')
+        NEPAL_RASTRA_BANK = 'Nepal Rastra Bank', _('Nepal Rastra Bank')
+        NEPAL_GRAMEEN_BIKAS = 'Nepal Grameen Bikas Bank Ltd.', _('Nepal Grameen Bikas Bank Ltd.')
+        NEPAL_INFRASTRUCTURE = 'Nepal Infrastructure Bank Ltd. (NIFRA)', _('Nepal Infrastructure Bank Ltd. (NIFRA)')
+
+    # Permanent Address
+    perm_state = models.CharField(
+        max_length=255,
+        choices=Province.choices,
+        verbose_name=_('Permanent State')
+    )
+    perm_district = models.CharField(max_length=255, verbose_name=_('Permanent District'))
+    perm_municipality = models.CharField(max_length=255, verbose_name=_('Permanent Municipality'))
+    perm_ward_no = models.CharField(max_length=255, verbose_name=_('Permanent Ward No.'))
 
     # Temporary Address
-    temp_state = models.CharField(max_length=255, choices=PROVINCE_CHOICES)
-    temp_district = models.CharField(max_length=255)
-    temp_municipality = models.CharField(max_length=255)
-    temp_ward_no = models.CharField(max_length=255)
+    temp_state = models.CharField(
+        max_length=255,
+        choices=Province.choices,
+        verbose_name=_('Temporary State')
+    )
+    temp_district = models.CharField(max_length=255, verbose_name=_('Temporary District'))
+    temp_municipality = models.CharField(max_length=255, verbose_name=_('Temporary Municipality'))
+    temp_ward_no = models.CharField(max_length=255, verbose_name=_('Temporary Ward No.'))
 
-    # Citizenship details
-    citizenship_id = models.CharField(max_length=255, unique=True)
-    citizenship_date_of_issue = models.DateField(null=True, blank=True)
-    citizenship_district = models.CharField(max_length=255)
-    citizenship_front_image = models.ImageField(upload_to='citizenship/')
-    citizenship_back_image = models.ImageField(upload_to='citizenship/')
+    # Citizenship Details
+    citizenship_id = models.CharField(
+        max_length=255,
+        unique=True,
+        verbose_name=_('Citizenship ID')
+    )
+    citizenship_date_of_issue = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name=_('Citizenship Date of Issue')
+    )
+    citizenship_district = models.CharField(
+        max_length=255,
+        verbose_name=_('Citizenship District')
+    )
+    citizenship_front_image = models.ImageField(
+        upload_to='citizenship/front/%Y/%m/%d/',
+        null=True,
+        blank=True,
+        verbose_name=_('Citizenship Front Image')
+    )
+    citizenship_back_image = models.ImageField(
+        upload_to='citizenship/back/%Y/%m/%d/',
+        null=True,
+        blank=True,
+        verbose_name=_('Citizenship Back Image')
+    )
 
-   # Personal details 
-    home_number = models.CharField(max_length=255)
-    phone_number = models.CharField(max_length=255) 
-    mobile_number = models.CharField(max_length=255)
-    date_joined = models.DateTimeField(null=True, blank=True)
-    recess_date = models.DateTimeField(null=True, blank=True)
-    position = models.CharField(max_length=255)
-    position_category = models.CharField(max_length=255, choices=position_category_choices)
+    # Personal Details
+    home_number = models.CharField(max_length=255, verbose_name=_('Home Number'))
+    phone_number = models.CharField(max_length=255, verbose_name=_('Phone Number'))
+    mobile_number = models.CharField(max_length=255, verbose_name=_('Mobile Number'))
+    date_joined = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_('Date Joined'),
+        null=True,
+        blank=True
+    )
+    recess_date = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name=_('Recess Date')
+    )
+    position = models.CharField(max_length=255, verbose_name=_('Position'))
+    position_category = models.CharField(
+        max_length=255,
+        choices=Office.PositionCategory.choices,
+        verbose_name=_('Position Category')
+    )
 
+    # Employee Details
+    employee_id = models.CharField(
+        max_length=255,
+        unique=True,
+        verbose_name=_('Employee ID')
+    )
+    employee_type = models.CharField(
+        max_length=255,
+        choices=EmployeeType.choices,
+        verbose_name=_('Employee Type')
+    )
+    na_la_kos_no = models.CharField(max_length=255, verbose_name=_('Na La Kos No.'))
+    accumulation_fund_no = models.CharField(
+        max_length=255,
+        verbose_name=_('Accumulation Fund No.')
+    )
+    bank_account_no = models.CharField(
+        max_length=255,
+        verbose_name=_('Bank Account No.')
+    )
+    bank_name = models.CharField(
+        max_length=255,
+        choices=Bank.choices,
+        verbose_name=_('Bank Name')
+    )
+
+    # Relationships
+    awards = models.ForeignKey(
+        Awards,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='user_awards',
+        verbose_name=_('Awards')
+    )
+    punishments = models.ForeignKey(
+        Punishments,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='user_punishments',
+        verbose_name=_('Punishments')
+    )
+    loan = models.ForeignKey(
+        Loan,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='user_loans',
+        verbose_name=_('Loan')
+    )
+    education = models.ForeignKey(
+        Education,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='user_education',
+        verbose_name=_('Education')
+    )
+    office = models.ForeignKey(
+        Office,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='user_office',
+        verbose_name=_('Office')
+    )
+
+    class Meta:
+        verbose_name = _('User')
+        verbose_name_plural = _('Users')
+
+    def __str__(self):
+        return self.username
     
-    # Employee details
-    employee_id = models.CharField(max_length=255, unique=True)
-    employee_type = models.CharField(max_length=255, choices=EMPLOYEE_TYPE_CHOICES)
-    na_la_kos_no = models.CharField(max_length=255, )
-    accumulation_fund_no = models.CharField(max_length=255)
-    bank_account_no = models.CharField(max_length=255)
-    bank_name = models.CharField(max_length=255, choices=BANK_CHOICES)
-
-    # Rewards and Punishments
-    awards = models.ForeignKey(Awards, on_delete=models.CASCADE, null=True, blank=True)
-    punishments = models.ForeignKey(Punishments, on_delete=models.CASCADE, null=True, blank=True)
-
-    # Loan details
-    loan = models.ForeignKey(Loan, on_delete=models.CASCADE, null=True, blank=True)
-
-    # Eduction Details
-    education = models.ForeignKey(Education, on_delete=models.CASCADE, null=True, blank=True)
-
-    #Office Details
-    office = models.ForeignKey(Office, on_delete=models.CASCADE, null=True, blank=True)
-
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
@@ -320,66 +469,3 @@ class CustomUser(AbstractUser):
         return district_municipality_data.get(district, [])
 
 
-class Designation(models.Model):
-    name = models.CharField(max_length=255, unique=True)
-
-    def __str__(self):
-        return self.name
-
-
-class Tippani(models.Model):
-    # file = models.ForeignKey(File, on_delete=models.CASCADE, related_name='tippanis')
-    present_file = models.FileField()
-    present_subject = models.CharField(max_length=255)
-    present_by = models.CharField(max_length=200)
-    present_date = models.DateField()
-    page_no = models.IntegerField()
-    total_page = models.IntegerField()
-    approved_by = models.CharField(max_length=200, null=True, blank=True)
-    approve_date = models.DateField(null=True, blank=True)
-
-    def __str__(self):
-        return f"Tippani for File {self.present_file.name if self.present_file else 'No File'}"
-
-
-class LettersAndDocuments(models.Model):
-    tippani = models.ForeignKey(Tippani, on_delete=models.CASCADE, related_name='letterandocuments')
-    registration_no = models.CharField(max_length=100)
-    invoice_no = models.CharField(max_length=100)
-    date = models.DateField()
-    subject = models.TextField()
-    letter_date = models.DateField()
-    sending_office = models.CharField(max_length=300)
-    receiving_office = models.CharField(max_length=300)
-    page_no = models.IntegerField()
-
-    def __str__(self):
-        return f"Document: {self.subject} (Reg No: {self.registration_no})"
-
-
-class File(models.Model):
-    letter_document = models.ForeignKey(LettersAndDocuments, on_delete=models.CASCADE, related_name='files', null=True)
-    file = models.FileField(upload_to='supporting_files/', null=True)
-
-    def __str__(self):
-        return self.file
-
-
-class Approval(models.Model):
-    STATUS_CHOICES = [
-        ('approved', 'Approved'),
-        ('rejected', 'Rejected'),
-        ('transferred', 'Transferred'),
-        ('pending', 'Pending'),
-    ]
-
-    tippani = models.ForeignKey(Tippani, on_delete=models.CASCADE, related_name='approvals')
-    submitted_by = models.ForeignKey(Designation, on_delete=models.CASCADE, related_name='submitted_tippanis')
-    approved_by = models.ForeignKey(Designation, on_delete=models.CASCADE, related_name='approved_tippanis', null=True,
-                                    blank=True)
-    status = models.CharField(max_length=100, choices=STATUS_CHOICES, default='pending')
-    remarks = models.TextField(null=True, blank=True)
-    approved_date = models.DateField(null=True, blank=True)
-
-    def __str__(self):
-        return self.tippani
