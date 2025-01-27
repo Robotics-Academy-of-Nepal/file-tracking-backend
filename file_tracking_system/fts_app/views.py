@@ -5,8 +5,35 @@ from rest_framework.authtoken.models import Token
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
-from .serializers import UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer , TippaniSerializer, LettersAndDocumentsSerializer, FileSerializer, DesignationSerializer, ApprovalSerializer
-from .models import CustomUser, Approval, Designation, File , LettersAndDocuments, Tippani
+from .serializers import (
+    UserRegistrationSerializer, 
+    UserLoginSerializer, 
+    UserProfileSerializer,
+    UserDetailSerializer,
+    TippaniSerializer, 
+    LettersAndDocumentsSerializer, 
+    FileSerializer, 
+    DesignationSerializer, 
+    ApprovalSerializer,
+    LoanSerializer,
+    EducationSerializer,
+    OfficeSerializer,
+    AwardsSerializer,
+    PunishmentsSerializer
+)
+from .models import (
+    CustomUser,
+    Approval, 
+    Designation, 
+    File , 
+    LettersAndDocuments, 
+    Tippani, 
+    Loan , 
+    Education, 
+    Awards, 
+    Punishments, 
+    Office
+)
 
 class UserViewSet(viewsets.ViewSet):
     authentication_classes = [TokenAuthentication]
@@ -99,7 +126,29 @@ class UserViewSet(viewsets.ViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+    @action(detail=False, methods=['get'], url_path='all')
+    def get_all_users(self, request):
+        """
+        Get details of all users.
+        """
+        users = CustomUser.objects.all()
+        serializer = UserDetailSerializer(users, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @action(detail=True, methods=['get'], url_path='details')
+    def get_user_details(self, request, pk=None):
+        """
+        Get details of a specific user by ID.
+        """
+        try:
+            user = CustomUser.objects.get(pk=pk)
+            serializer = UserDetailSerializer(user)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except CustomUser.DoesNotExist:
+            return Response(
+                {"detail": "User not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
 # Helper views for address data
 @api_view(['GET'])
@@ -182,3 +231,24 @@ class ApprovalViewSet(viewsets.ModelViewSet):
         if tippani_id is not None:
             queryset = queryset.filter(tippani_id=tippani_id)
         return queryset
+    
+# Example views for other models (optional)
+class LoanViewSet(viewsets.ModelViewSet):
+    queryset = Loan.objects.all()
+    serializer_class = LoanSerializer
+
+class EducationViewSet(viewsets.ModelViewSet):
+    queryset = Education.objects.all()
+    serializer_class = EducationSerializer
+
+class AwardsViewSet(viewsets.ModelViewSet):
+    queryset = Awards.objects.all()
+    serializer_class = AwardsSerializer
+
+class PunishmentsViewSet(viewsets.ModelViewSet):
+    queryset = Punishments.objects.all()
+    serializer_class = PunishmentsSerializer
+
+class OfficeViewSet(viewsets.ModelViewSet):
+    queryset = Office.objects.all()
+    serializer_class = OfficeSerializer

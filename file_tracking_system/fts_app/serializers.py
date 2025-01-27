@@ -190,6 +190,74 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class UserDetailSerializer(serializers.ModelSerializer):
+    education = serializers.SerializerMethodField()
+    awards = serializers.SerializerMethodField()
+    punishments = serializers.SerializerMethodField()
+    loan = serializers.SerializerMethodField()
+    office = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CustomUser
+        fields = [
+            'id', 'username', 'email', 'employee_id', 'position', 'perm_state', 'perm_district', 'perm_municipality',
+            'temp_state', 'temp_district', 'temp_municipality', 'citizenship_id', 'citizenship_date_of_issue',
+            'citizenship_district', 'home_number', 'phone_number', 'mobile_number', 'date_joined', 'recess_date',
+            'employee_type', 'na_la_kos_no', 'accumulation_fund_no', 'bank_account_no', 'bank_name',
+            'education', 'awards', 'punishments', 'loan', 'office'
+        ]
+
+    def get_education(self, obj):
+        if obj.education:
+            return {
+                "education_level": obj.education.education_level,
+                "institution": obj.education.institution,
+                "board": obj.education.board,
+                "percentage": obj.education.percentage,
+                "year": obj.education.year
+            }
+        return None
+
+    def get_awards(self, obj):
+        if obj.awards:
+            return {
+                "name": obj.awards.name,
+                "description": obj.awards.description
+            }
+        return None
+
+    def get_punishments(self, obj):
+        if obj.punishments:
+            return {
+                "name": obj.punishments.name,
+                "description": obj.punishments.description
+            }
+        return None
+
+    def get_loan(self, obj):
+        if obj.loan:
+            return {
+                "loan_type": obj.loan.loan_type,
+                "name": obj.loan.name,
+                "interest_rate": obj.loan.interest_rate,
+                "max_amount": obj.loan.max_amount,
+                "min_amount": obj.loan.min_amount,
+                "max_tenure": obj.loan.max_tenure,
+                "min_tenure": obj.loan.min_tenure
+            }
+        return None
+
+    def get_office(self, obj):
+        if obj.office:
+            return {
+                "office_name": obj.office.office_name,
+                "position": obj.office.position,
+                "position_category": obj.office.position_category,
+                "duration": obj.office.duration
+            }
+        return None        
+
+
 class DesignationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Designation
