@@ -280,6 +280,11 @@ class CustomUser(AbstractUser):
     )
 
     # Personal Details
+    hire_date = models.DateField(null=True, blank=True)
+    recess_date = models.DateField(null=True, blank=True)
+    father_name = models.CharField(max_length=255, verbose_name=_('Father Name'))
+    mother_name = models.CharField(max_length=255, verbose_name=_('Mother Name'))
+    grand_father_name = models.CharField(max_length=255, verbose_name=_('Grand Father Name'))
     home_number = models.CharField(max_length=255, verbose_name=_('Home Number'))
     phone_number = models.CharField(max_length=255, verbose_name=_('Phone Number'))
     mobile_number = models.CharField(max_length=255, verbose_name=_('Mobile Number'))
@@ -905,6 +910,18 @@ class CustomUser(AbstractUser):
         return district_municipality_data.get(district, [])
 
 
+class UserProfile(models.Model):
+    USER_TYPE_CHOICES = [
+        ('Faat', 'Faat'),
+        ('Branch  Head' , 'Branch  Head'),
+        ('Branch Officer', 'Branch Officer'),
+        ('Division Head', 'Division Head'),
+        ('Admin', 'Admin'),
+        ]
+
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    user_type = models.CharField(max_length=100, choices=USER_TYPE_CHOICES)
+
 class Designation(models.Model):
     name = models.CharField(max_length=255, unique=True)
 
@@ -913,6 +930,7 @@ class Designation(models.Model):
 
 
 class Tippani(models.Model):
+    office = models.ForeignKey(Office, on_delete=models.CASCADE, related_name='tippanis')
     present_file = models.FileField(null=True, blank=True)
     present_subject = models.CharField(max_length=255)
     present_by = models.CharField(max_length=200)
@@ -942,7 +960,6 @@ class LettersAndDocuments(models.Model):
 
 class File(models.Model):
     
-
     letter_document = models.ForeignKey(LettersAndDocuments, on_delete=models.CASCADE, related_name='files', null=True)
     file = models.FileField(upload_to='supporting_files/', null=True)    
     file_number = models.CharField(max_length=50, unique=True, blank=True, editable=False)

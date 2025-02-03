@@ -73,6 +73,7 @@ class UserViewSet(viewsets.ViewSet):
         """
         Authenticate and log in a user.
         """
+        print(request.data)
         serializer = UserLoginSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.validated_data['user']
@@ -184,13 +185,9 @@ def get_municipalities(request, province, district):
     municipalities = CustomUser.get_municipality_choices(province, district)
     return Response(municipalities, status=status.HTTP_200_OK)
 
-
-
-
 class TippaniViewSet(viewsets.ModelViewSet):
     queryset = Tippani.objects.all()
     serializer_class = TippaniSerializer
-
 
 class LettersAndDocumentsViewSet(viewsets.ModelViewSet):
     queryset = LettersAndDocuments.objects.all()
@@ -214,12 +211,10 @@ class FileViewSet(viewsets.ModelViewSet):
         if letter_document_id is not None:
             queryset = queryset.filter(letter_document_id=letter_document_id)
         return queryset
-
-
+    
 class DesignationViewSet(viewsets.ModelViewSet):
     queryset = Designation.objects.all()
     serializer_class = DesignationSerializer
-
 
 class ApprovalViewSet(viewsets.ModelViewSet):
     queryset = Approval.objects.all()
@@ -250,5 +245,5 @@ class PunishmentsViewSet(viewsets.ModelViewSet):
     serializer_class = PunishmentsSerializer
 
 class OfficeViewSet(viewsets.ModelViewSet):
-    queryset = Office.objects.all()
+    queryset = Office.objects.all()                                                                                                              
     serializer_class = OfficeSerializer
